@@ -11,6 +11,7 @@ use core::panic::PanicInfo;
  */
 #[no_mangle]
 #[naked]
+#[link_section = ".boot"]
 pub unsafe extern "C" fn _start() -> ! {
     asm!(r#"
         nop
