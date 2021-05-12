@@ -7,3 +7,5 @@ pub mod rdp;
 pub mod memory;
 pub mod font;
 pub mod interrupt;
+pub mod menu;
+pub mod math;

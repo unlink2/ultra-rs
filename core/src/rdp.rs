@@ -24,6 +24,15 @@ impl RdpFontRendererContext {
     }
 
     pub fn update(&mut self) {
+        // needs to be divisible by 8!
+
+        // clear difference
+        let rem = 8 - self.offset % 8;
+        if rem > 0 {
+            unsafe { self.clear_buffer(rem); }
+            self.offset += rem;
+        }
+
         // send previous dl
         unsafe {
             self.send_dl((self.buffer.add(self.start)) as *mut u8,
@@ -45,7 +54,7 @@ impl RdpFontRendererContext {
 
     #[inline(always)]
     unsafe fn clear_buffer(&mut self, size: usize) {
-        umemset(self.buffer.add(self.offset) as *mut u8, 0, size as isize);
+        umemset(self.buffer.add(self.offset) as *mut u8, 0, size*4);
     }
 
     unsafe fn send_dl(&mut self, start: *mut u8, end: *mut u8) {
@@ -206,6 +215,16 @@ impl RdpFontRendererContext {
         unsafe {self.offset += self.texture_mode();}
         for c in s.chars() {
             self.draw_char(c, current_x, y, font);
+            current_x += CHAR_W as i32;
+        }
+    }
+
+    pub fn cputs(&mut self, s: &[char], x: i32, y: i32, font: &Font) {
+        let mut current_x = x;
+        unsafe {self.offset += self.texture_mode();}
+        for c in s {
+            if *c == '\0' { break; }
+            self.draw_char(*c, current_x, y, font);
             current_x += CHAR_W as i32;
         }
     }
