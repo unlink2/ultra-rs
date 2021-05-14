@@ -38,7 +38,7 @@ impl<'a, T> SharedPtrCell<T> {
         }
     }
 
-    pub fn as_mut(&mut self) -> &'a T {
+    pub fn as_mut(&mut self) -> &'a mut T {
         unsafe {
             return self.ptr.as_mut().unwrap();
         }
