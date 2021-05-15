@@ -173,7 +173,8 @@ where T: Copy + Clone {
         self.close_action.activate(data);
     }
 
-    pub fn back_action(&mut self, data: T) {
+    pub fn back(&mut self, data: T) {
+        self.toggle_timer = 0;
         self.back_action.activate(data);
     }
 
