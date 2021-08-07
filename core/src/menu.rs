@@ -1,6 +1,7 @@
 use super::font::*;
 use super::rdp::*;
 use super::math::*;
+use super::render::RenderContext;
 
 pub const MAX_ENTRIES: usize = 15;
 pub const MAX_TITLE_LEN: usize = 15;
@@ -50,7 +51,7 @@ where T: Copy + Clone {
         }
     }
 
-    pub fn draw(&mut self, ctxt: &mut RdpFontRendererContext, font: &mut Font, x: i32, y: i32) {
+    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, font: &dyn GenericFont, x: i32, y: i32) {
         ctxt.cputs(&self.title, x, y, font);
     }
 
@@ -108,7 +109,7 @@ where T: Copy + Clone {
         }
     }
 
-    pub fn draw(&mut self, ctxt: &mut RdpFontRendererContext, font: &mut Font) {
+    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, font: &dyn GenericFont) {
         if !self.active { return; }
 
         let start_x: i32 = self.x;

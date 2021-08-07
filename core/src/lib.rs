@@ -13,3 +13,4 @@ pub mod interrupt;
 pub mod menu;
 pub mod math;
 pub mod usb;
+pub mod render;

@@ -1,3 +1,6 @@
+use core::slice;
+
+
 /**
  * 8x8 monochrome bitmap fonts for rendering
  * Author: Daniel Hepper <daniel@hepper.net>
@@ -25,14 +28,30 @@ pub const CHAR_W: usize = 8;
 pub const CHAR_H: usize = 8;
 pub const FONT_LEN: usize = 128;
 
+pub trait GenericFont<'a> {
+    fn data(&self) -> &'a [u16] {
+        &[]
+    }
+}
+
+pub struct NoneFont;
+impl<'a> GenericFont<'a> for NoneFont { }
+
 // TODO remove hard coded ptr
 pub struct Font {
-    pub data: *mut u16
+    pub data: *mut u16,
+    size: usize
+}
+
+impl<'a> GenericFont<'a> for Font {
+    fn data(&self) -> &'a [u16] {
+        unsafe { slice::from_raw_parts_mut(self.data, self.size) }
+    }
 }
 
 impl Font {
     pub fn new(compressed: &[[u8; CHAR_W]; FONT_LEN], data: *mut u16, fg: u16, bg: u16) -> Self {
-        let f = Self {data};
+        let mut f = Self {data, size: 0};
         // pretty slow but it only needs to be done once!
         unsafe {
             // counter for resulting flat image
@@ -51,6 +70,7 @@ impl Font {
                             *f.data.add(dest) = bg;
                         }
                         dest += 1;
+                        f.size += 1;
                     }
                 }
             }
