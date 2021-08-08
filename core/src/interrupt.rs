@@ -1,4 +1,7 @@
 // $12 == $status
+
+pub type IntFn = unsafe extern "C" fn() -> ();
+
 #[naked]
 pub unsafe extern "C" fn disable_int() {
     asm!(r#"
