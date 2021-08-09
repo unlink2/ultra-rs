@@ -51,6 +51,39 @@ where T: Copy + Clone {
         }
     }
 
+    pub fn checkbox(title: &str, update: EntryFn<T>, action: EntryFn<T>, value: bool) -> Self {
+        let mut title_ca = ['\0'; MAX_TITLE_LEN];
+
+        title_ca[0] = '[';
+        if value { title_ca[1] = 'x' } else { title_ca[1] = ' ' };
+        title_ca[2] = ']';
+        for i in 3..min(MAX_TITLE_LEN, title.len()+3) {
+            title_ca[i] = title.chars().nth(i-3).unwrap_or('\0');
+        }
+
+        Self {
+            title: title_ca,
+            update,
+            action,
+            active: true
+        }
+    }
+
+    pub fn set_checkbox(&mut self, value: bool) {
+        if value {
+            self.title[1] = 'x';
+        } else {
+            self.title[1] = ' ';
+        }
+    }
+
+    pub fn set_title(&mut self, title: &str) {
+        self.title.fill(' ');
+        for i in 0..min(MAX_TITLE_LEN, title.len()) {
+            self.title[i] = title.chars().nth(i).unwrap_or('\0');
+        }
+    }
+
     pub fn draw(&mut self, ctxt: &mut dyn RenderContext, font: &dyn GenericFont, x: i32, y: i32) {
         ctxt.cputs(&self.title, x, y, font);
     }

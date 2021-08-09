@@ -22,6 +22,8 @@ jobs:
       run: cargo install cargo-binutils
     - name: Add llvm tools
       run: rustup component add llvm-tools-preview
+    - name: Use nightly
+      run: rustup default nightly
 
     - name: Build
       run: ./build.sh
