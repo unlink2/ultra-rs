@@ -1,6 +1,7 @@
 // $12 == $status
 
-pub type IntFn = unsafe extern "C" fn() -> ();
+pub type EnableIntFn = unsafe extern "C" fn(flags: usize) -> ();
+pub type DisableIntFn = unsafe extern "C" fn() -> ();
 
 #[naked]
 pub unsafe extern "C" fn disable_int() {
@@ -19,10 +20,9 @@ pub unsafe extern "C" fn disable_int() {
 }
 
 #[naked]
-pub unsafe extern "C" fn enable_int() {
+pub unsafe extern "C" fn enable_int(flags: usize) {
     asm!(r#"
         .set noat
-        addiu $a0, $zero, 1
         mfc0 $t0, $12
         or $t0, $t0, $a0
         mtc0 $t0, $12

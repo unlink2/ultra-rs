@@ -1,6 +1,6 @@
 use super::memory::umemset;
 use super::font::*;
-use super::interrupt::{enable_int, disable_int, IntFn};
+use super::interrupt::{enable_int, disable_int, EnableIntFn, DisableIntFn};
 use super::render::RenderContext;
 
 // TODO remove hard coded ptrs
@@ -10,12 +10,12 @@ pub struct RdpFontRendererContext {
     start: usize,
     size: usize,
     registers: *mut u32,
-    on_disable: IntFn,
-    on_enable: IntFn
+    on_disable: DisableIntFn,
+    on_enable: EnableIntFn
 }
 
 impl RdpFontRendererContext {
-    pub fn new(buffer: *mut u32, size: usize, on_enable: IntFn, on_disable: IntFn) -> Self {
+    pub fn new(buffer: *mut u32, size: usize, on_enable: EnableIntFn, on_disable: DisableIntFn) -> Self {
         let mut rdp = Self {
             buffer,
             size,
@@ -31,7 +31,7 @@ impl RdpFontRendererContext {
 
     #[inline(always)]
     unsafe fn wait_pipe(&mut self, other: u32) {
-        while (core::ptr::read_volatile(self.registers.add(3)) & (0x600 | other)) == 1 {}
+        while (core::ptr::read_volatile(self.registers.add(3)) & (0x600 | other)) > 0 {}
     }
 
     /// clears the buffer starting at offset
@@ -40,19 +40,20 @@ impl RdpFontRendererContext {
         umemset(self.buffer.add(self.offset) as *mut u8, 0, size*core::mem::size_of::<u32>());
     }
 
-    unsafe fn send_dl(&mut self) {
-        // align to %8 before sending or it crashes
+    unsafe fn send_cmds(&mut self) {
+        // always align before sending or we are going to have a bad time
         self.align();
 
         let start = self.buffer.add(self.start);
         let end = self.buffer.add(self.offset);
+
         if start == end { return; }
 
         // wait for rdp
         self.wait_pipe(0);
 
         // no interrupts to prevent conflicts
-        (self.on_disable)();
+        disable_int();
 
         // set flush flag
         core::ptr::write_volatile(self.registers.add(3), 0x15);
@@ -65,7 +66,7 @@ impl RdpFontRendererContext {
         core::ptr::write_volatile(self.registers.add(1), end as u32 & 0x00FFFFFF);
         self.wait_pipe(0);
 
-        (self.on_enable)();
+        enable_int(0x2000FF01);
     }
 
     #[inline(always)]
@@ -147,7 +148,7 @@ impl RdpFontRendererContext {
 
     /// aligsn write to size of 8
     pub unsafe fn align(&mut self) {
-        while self.offset % 8 != 0 {
+        while self.offset % 16 != 0 {
             self.write(0);
         }
     }
@@ -161,7 +162,7 @@ impl RenderContext for RdpFontRendererContext {
     fn update(&mut self) {
         // send previous dl
         unsafe {
-            self.send_dl();
+            self.send_cmds();
         }
         // check bounds of dl
         if self.start > self.size {
