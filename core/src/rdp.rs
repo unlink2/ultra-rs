@@ -2,6 +2,29 @@ use super::memory::umemset;
 use super::font::*;
 use super::interrupt::{enable_int, disable_int, EnableIntFn, DisableIntFn};
 use super::render::RenderContext;
+use core::ffi::c_void;
+
+/// Dp Command registers
+/// as a struct for easier access
+#[repr(C)]
+pub struct DpCmdRegisters {
+    start: *const c_void,
+    end: *const c_void,
+    current: *const c_void,
+    status: u32,
+    clock: u32,
+    buf_busy: u32,
+    pipe_busy: u32,
+    tmem: u32
+}
+
+impl DpCmdRegisters {
+    /// converts the actual dp register location into a pointer
+    /// of type DpCmdRegisters and returns it
+    pub fn new() -> *mut Self {
+        unsafe { core::mem::transmute::<*const c_void, *mut DpCmdRegisters>(0xA4100000 as *mut c_void) }
+    }
+}
 
 // TODO remove hard coded ptrs
 pub struct RdpFontRendererContext {
@@ -9,7 +32,7 @@ pub struct RdpFontRendererContext {
     pub offset: usize,
     start: usize,
     size: usize,
-    registers: *mut u32,
+    registers: *mut DpCmdRegisters,
     on_disable: DisableIntFn,
     on_enable: EnableIntFn
 }
@@ -21,7 +44,7 @@ impl RdpFontRendererContext {
             size,
             offset: 0,
             start: 0,
-            registers: 0xA4100000 as *mut u32,
+            registers: DpCmdRegisters::new(),
             on_disable,
             on_enable
         };
@@ -31,7 +54,7 @@ impl RdpFontRendererContext {
 
     #[inline(always)]
     unsafe fn wait_pipe(&mut self, other: u32) {
-        while (core::ptr::read_volatile(self.registers.add(3)) & (0x600 | other)) > 0 {}
+        while ((*self.registers).status as u32 & (0x600 | other)) > 0 {}
     }
 
     /// clears the buffer starting at offset
@@ -53,20 +76,21 @@ impl RdpFontRendererContext {
         self.wait_pipe(0);
 
         // no interrupts to prevent conflicts
-        disable_int();
+        (self.on_disable)();
 
         // set flush flag
-        core::ptr::write_volatile(self.registers.add(3), 0x15);
+        (*self.registers).status = 0x15;
         // wait again to flush
         self.wait_pipe(0);
 
         // start dma
         // & 0x00FFFFFF -> converts to physical address for dma
-        core::ptr::write_volatile(self.registers.add(0), start as u32 & 0x00FFFFFF);
-        core::ptr::write_volatile(self.registers.add(1), end as u32 & 0x00FFFFFF);
-        self.wait_pipe(0);
+        (*self.registers).start = (start as u32 & 0x00FFFFFF) as *const c_void;
+        (*self.registers).end = (end as u32 & 0x00FFFFFF) as *const c_void;
+        // dma busy; pipe busy
+        self.wait_pipe(0b101000000);
 
-        enable_int(0x2000FF01);
+        (self.on_enable)(0x2000FF01);
     }
 
     #[inline(always)]
@@ -148,7 +172,7 @@ impl RdpFontRendererContext {
 
     /// aligsn write to size of 8
     pub unsafe fn align(&mut self) {
-        while self.offset % 16 != 0 {
+        while self.offset % 8 != 0 {
             self.write(0);
         }
     }
