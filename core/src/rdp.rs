@@ -64,8 +64,7 @@ impl RdpFontRendererContext {
     }
 
     unsafe fn send_cmds(&mut self) {
-        // always align before sending or we are going to have a bad time
-        self.align();
+        // self.align();
 
         let start = self.buffer.add(self.start);
         let end = self.buffer.add(self.offset);
@@ -76,7 +75,8 @@ impl RdpFontRendererContext {
         self.wait_pipe(0);
 
         // no interrupts to prevent conflicts
-        (self.on_disable)();
+        // (self.on_disable)();
+        let previ = disable_int();
 
         // set flush flag
         (*self.registers).status = 0x15;
@@ -85,12 +85,12 @@ impl RdpFontRendererContext {
 
         // start dma
         // & 0x00FFFFFF -> converts to physical address for dma
-        (*self.registers).start = (start as u32 & 0x00FFFFFF) as *const c_void;
-        (*self.registers).end = (end as u32 & 0x00FFFFFF) as *const c_void;
+        (*self.registers).start = (start as u32) as *const c_void;
+        (*self.registers).end = (end as u32) as *const c_void;
         // dma busy; pipe busy
         self.wait_pipe(0b101000000);
 
-        (self.on_enable)(0x2000FF01);
+        (self.on_enable)(previ);
     }
 
     #[inline(always)]

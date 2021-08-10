@@ -1,10 +1,10 @@
 // $12 == $status
 
 pub type EnableIntFn = unsafe extern "C" fn(flags: usize) -> ();
-pub type DisableIntFn = unsafe extern "C" fn() -> ();
+pub type DisableIntFn = unsafe extern "C" fn() -> usize;
 
 #[naked]
-pub unsafe extern "C" fn disable_int() {
+pub unsafe extern "C" fn disable_int() -> usize {
     asm!(r#"
         .set noat
         mfc0 $t0, $12
