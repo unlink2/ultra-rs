@@ -1,8 +1,16 @@
 use super::memory::umemset;
 use super::font::*;
-use super::interrupt::{enable_int, disable_int, EnableIntFn, DisableIntFn};
+use super::interrupt::{EnableIntFn, DisableIntFn};
 use super::render::RenderContext;
 use core::ffi::c_void;
+
+/**
+ * This is a game-indipendand
+ * font renderer
+ * it works by writing rdp commands into a buffer and sending them
+ *  TODO WIP not functions. This has a lower prioerity just implement game-specific rendering for
+ *  now
+ */
 
 /// Dp Command registers
 /// as a struct for easier access
@@ -76,7 +84,7 @@ impl RdpFontRendererContext {
 
         // no interrupts to prevent conflicts
         // (self.on_disable)();
-        let previ = disable_int();
+        let previ = (self.on_disable)();
 
         // set flush flag
         (*self.registers).status = 0x15;

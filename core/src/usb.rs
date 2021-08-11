@@ -61,7 +61,7 @@ const USB_CMD_RD: usize = USB_LE_CFG | USB_LE_CTR | USB_CFG_RD | USB_CFG_ACT;
 const USB_CMD_WR_NOP: usize = USB_LE_CFG | USB_LE_CTR | USB_CFG_WR;
 const USB_CMD_WR: usize = USB_LE_CFG | USB_LE_CTR | USB_CFG_WR | USB_CFG_ACT;
 
-struct pi_regs {
+struct PiRegs {
     ram_addr: *mut c_void,
     pi_addr: *mut c_void,
     read_len: usize,
@@ -70,7 +70,31 @@ struct pi_regs {
 }
 
 /// we need the registers at this specific address
-const PIR: *mut pi_regs = PI_BASE_REG as *mut pi_regs;
+const PIR: *mut PiRegs = PI_BASE_REG as *mut PiRegs;
+
+#[derive(Copy, Clone)]
+pub struct Usb {
+    pub inited: bool
+}
+
+impl Usb {
+    pub fn new() -> Self {
+        Self { inited: false }
+    }
+
+    pub fn init(&mut self) {
+        init_usb_interface();
+        self.inited = true;
+    }
+
+    pub fn read_usb(&self, data: &mut [u8]) -> Result<(), BiError> {
+        read_usb(data)
+    }
+
+    pub fn write(data: &mut [u8]) -> Result<(), BiError> {
+        write_usb(data)
+    }
+}
 
 #[inline]
 unsafe fn ed_regs(reg: *mut u32) -> *mut u32 {
@@ -284,6 +308,16 @@ pub fn read_usb(data: &mut [u8]) -> Result<(), BiError> {
             Err(e)
         } else {
             evd_usb_read(data)
+        }
+    }
+}
+
+pub fn write_usb(data: &mut [u8]) -> Result<(), BiError> {
+    unsafe {
+        if let Err(e) = evd_usb_busy() {
+            Err(e)
+        } else {
+            evd_usb_write(data)
         }
     }
 }
