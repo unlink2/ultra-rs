@@ -23,7 +23,7 @@ pub struct DpCmdRegisters {
     clock: u32,
     buf_busy: u32,
     pipe_busy: u32,
-    tmem: u32
+    tmem: u32,
 }
 
 impl DpCmdRegisters {
@@ -35,18 +35,24 @@ impl DpCmdRegisters {
 }
 
 // TODO remove hard coded ptrs
-pub struct RdpFontRendererContext {
+pub struct RdpFontRendererContext<'a> {
     buffer: *mut u32,
     pub offset: usize,
     start: usize,
     size: usize,
     registers: *mut DpCmdRegisters,
     on_disable: DisableIntFn,
-    on_enable: EnableIntFn
+    on_enable: EnableIntFn,
+    font: &'a dyn GenericFont<'a>
 }
 
-impl RdpFontRendererContext {
-    pub fn new(buffer: *mut u32, size: usize, on_enable: EnableIntFn, on_disable: DisableIntFn) -> Self {
+impl<'a> RdpFontRendererContext<'a> {
+    pub fn new(
+        buffer: *mut u32,
+        size: usize,
+        on_enable: EnableIntFn,
+        on_disable: DisableIntFn,
+        font: &'a dyn GenericFont<'a>) -> Self {
         let mut rdp = Self {
             buffer,
             size,
@@ -54,7 +60,8 @@ impl RdpFontRendererContext {
             start: 0,
             registers: DpCmdRegisters::new(),
             on_disable,
-            on_enable
+            on_enable,
+            font
         };
         unsafe { rdp.clear_buffer(rdp.size); }
         rdp
@@ -187,7 +194,7 @@ impl RdpFontRendererContext {
 
 }
 
-impl RenderContext for RdpFontRendererContext {
+impl RenderContext for RdpFontRendererContext<'_> {
     // TODO the current way of sending the buffer
     // will allow it to overflow happily
     // and there is now way to reset it half-way through a write
@@ -205,37 +212,37 @@ impl RenderContext for RdpFontRendererContext {
         self.start = self.offset;
     }
 
-    fn puts(&mut self, s: &str, x: i32, y: i32, font: &dyn GenericFont) {
+    fn puts(&mut self, s: &str, x: i32, y: i32) {
         let mut current_x = x;
         unsafe {
             self.texture_mode();
         }
         for c in s.chars() {
-            self.draw_char(c, current_x, y, font);
+            self.draw_char(c, current_x, y);
             current_x += CHAR_W as i32;
         }
     }
 
-    fn cputs(&mut self, s: &[char], x: i32, y: i32, font: &dyn GenericFont) {
+    fn cputs(&mut self, s: &[char], x: i32, y: i32) {
         let mut current_x = x;
         unsafe {
             self.texture_mode();
         }
         for c in s {
             if *c == '\0' { break; }
-            self.draw_char(*c, current_x, y, font);
+            self.draw_char(*c, current_x, y);
             current_x += CHAR_W as i32;
         }
     }
 
-    fn draw_char(&mut self, c: char, x: i32, y: i32, font: &dyn GenericFont) {
+    fn draw_char(&mut self, c: char, x: i32, y: i32) {
         if c == '\0' { return; }
 
         let offset = c as usize
             * CHAR_W
             * CHAR_H;
         unsafe {
-            self.load_tile(font, offset);
+            self.load_tile(self.font, offset);
             self.draw_tile(x, y, CHAR_W as i32, CHAR_H as i32);
         }
     }

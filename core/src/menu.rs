@@ -83,8 +83,8 @@ where T: Copy + Clone {
         }
     }
 
-    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, font: &dyn GenericFont, x: i32, y: i32) {
-        ctxt.cputs(&self.title, x, y, font);
+    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, x: i32, y: i32) {
+        ctxt.cputs(&self.title, x, y);
     }
 
     pub fn call_update(&mut self, data: T) {
@@ -141,7 +141,7 @@ where T: Copy + Clone {
         }
     }
 
-    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, font: &dyn GenericFont) {
+    pub fn draw(&mut self, ctxt: &mut dyn RenderContext) {
         if !self.active { return; }
 
         let start_x: i32 = self.x;
@@ -152,9 +152,9 @@ where T: Copy + Clone {
             if !entry.active { continue; }
 
             if self.cursor == counter {
-                ctxt.puts(">", start_x, start_y, font);
+                ctxt.puts(">", start_x, start_y);
             }
-            entry.draw(ctxt, font, start_x + CHAR_W as i32 + 2, start_y);
+            entry.draw(ctxt, start_x + CHAR_W as i32 + 2, start_y);
             start_y += CHAR_H as i32 + 2;
 
             counter += 1;
