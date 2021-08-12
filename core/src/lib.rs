@@ -14,3 +14,4 @@ pub mod menu;
 pub mod math;
 pub mod usb;
 pub mod render;
+pub mod color;

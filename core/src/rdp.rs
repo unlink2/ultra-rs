@@ -192,13 +192,24 @@ impl<'a> RdpFontRendererContext<'a> {
         }
     }
 
+    fn draw_char(&mut self, c: char, x: i32, y: i32) {
+        if c == '\0' { return; }
+
+        let offset = c as usize
+            * CHAR_W
+            * CHAR_H;
+        unsafe {
+            self.load_tile(self.font, offset);
+            self.draw_tile(x, y, CHAR_W as i32, CHAR_H as i32);
+        }
+    }
 }
 
 impl RenderContext for RdpFontRendererContext<'_> {
     // TODO the current way of sending the buffer
     // will allow it to overflow happily
     // and there is now way to reset it half-way through a write
-    fn update(&mut self) {
+    fn draw(&mut self) {
         // send previous dl
         unsafe {
             self.send_cmds();
@@ -232,18 +243,6 @@ impl RenderContext for RdpFontRendererContext<'_> {
             if *c == '\0' { break; }
             self.draw_char(*c, current_x, y);
             current_x += CHAR_W as i32;
-        }
-    }
-
-    fn draw_char(&mut self, c: char, x: i32, y: i32) {
-        if c == '\0' { return; }
-
-        let offset = c as usize
-            * CHAR_W
-            * CHAR_H;
-        unsafe {
-            self.load_tile(self.font, offset);
-            self.draw_tile(x, y, CHAR_W as i32, CHAR_H as i32);
         }
     }
 }

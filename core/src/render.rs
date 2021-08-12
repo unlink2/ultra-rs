@@ -5,7 +5,7 @@ pub trait RenderContext {
     /// this function should flush the
     /// last draw operations to the screen and
     /// clear the buffer
-    fn update(&mut self) {
+    fn draw(&mut self) {
     }
 
     /// the put and draw functions should write to
@@ -13,5 +13,4 @@ pub trait RenderContext {
     /// the screen during update
     fn puts(&mut self, s: &str, x: i32, y: i32);
     fn cputs(&mut self, s: &[char], x: i32, y: i32);
-    fn draw_char(&mut self, c: char, x: i32, y: i32);
 }
