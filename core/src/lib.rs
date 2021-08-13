@@ -5,13 +5,14 @@
 
 extern crate embedgdb;
 
-pub mod input;
-pub mod rdp;
-pub mod memory;
-pub mod font;
-pub mod interrupt;
-pub mod menu;
-pub mod math;
-pub mod usb;
-pub mod render;
 pub mod color;
+pub mod font;
+pub mod input;
+pub mod interrupt;
+pub mod math;
+pub mod memory;
+pub mod menu;
+pub mod monitor;
+pub mod rdp;
+pub mod render;
+pub mod usb;

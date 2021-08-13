@@ -27,7 +27,7 @@ pub const CONTROLLER2: *mut u32 = 0xBFC007CC as *mut u32;
 pub struct InputHandler {
     controller: *mut u32,
     current: u32,
-    last: u32
+    last: u32,
 }
 
 impl InputHandler {
@@ -35,7 +35,7 @@ impl InputHandler {
         Self {
             controller,
             last: 0,
-            current: 0
+            current: 0,
         }
     }
 
@@ -62,7 +62,7 @@ impl InputHandler {
     }
 
     pub fn is_pressed(&self, button: Button, readout: u32) -> bool {
-        return (((readout >> (button as u32))) & 0x01) == 1;
+        return ((readout >> (button as u32)) & 0x01) == 1;
     }
 
     pub fn read_stick(&self, axis: Axis) -> u8 {

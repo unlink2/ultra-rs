@@ -13,21 +13,22 @@ use core::panic::PanicInfo;
 #[naked]
 #[link_section = ".boot"]
 pub unsafe extern "C" fn _start() -> ! {
-    asm!(r#"
+    asm!(
+        r#"
         nop
         jal main
         nop
         b _start
         nop
     "#,
-    options(noreturn));
+        options(noreturn)
+    );
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn main() -> () {
     return ();
 }
-
 
 /// This function is called on panic.
 #[panic_handler]

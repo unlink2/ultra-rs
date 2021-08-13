@@ -1,6 +1,8 @@
 pub fn min<T>(v1: T, v2: T) -> T
-where T: Ord {
-    return if v1 < v2 { v1 } else { v2 }
+where
+    T: Ord,
+{
+    return if v1 < v2 { v1 } else { v2 };
 }
 
 #[repr(C)]
@@ -8,13 +10,11 @@ where T: Ord {
 pub struct Vector3<T> {
     pub x: T,
     pub y: T,
-    pub z: T
+    pub z: T,
 }
 
 impl<T> Vector3<T> {
     pub fn new(x: T, y: T, z: T) -> Self {
-        return Self {
-            x, y, z
-        }
+        return Self { x, y, z };
     }
 }

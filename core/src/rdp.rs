@@ -1,6 +1,6 @@
-use super::memory::umemset;
 use super::font::*;
-use super::interrupt::{EnableIntFn, DisableIntFn};
+use super::interrupt::{DisableIntFn, EnableIntFn};
+use super::memory::umemset;
 use super::render::RenderContext;
 use core::ffi::c_void;
 
@@ -30,7 +30,9 @@ impl DpCmdRegisters {
     /// converts the actual dp register location into a pointer
     /// of type DpCmdRegisters and returns it
     pub fn new() -> *mut Self {
-        unsafe { core::mem::transmute::<*const c_void, *mut DpCmdRegisters>(0xA4100000 as *mut c_void) }
+        unsafe {
+            core::mem::transmute::<*const c_void, *mut DpCmdRegisters>(0xA4100000 as *mut c_void)
+        }
     }
 }
 
@@ -43,7 +45,7 @@ pub struct RdpFontRendererContext<'a> {
     registers: *mut DpCmdRegisters,
     on_disable: DisableIntFn,
     on_enable: EnableIntFn,
-    font: &'a dyn GenericFont<'a>
+    font: &'a dyn GenericFont<'a>,
 }
 
 impl<'a> RdpFontRendererContext<'a> {
@@ -52,7 +54,8 @@ impl<'a> RdpFontRendererContext<'a> {
         size: usize,
         on_enable: EnableIntFn,
         on_disable: DisableIntFn,
-        font: &'a dyn GenericFont<'a>) -> Self {
+        font: &'a dyn GenericFont<'a>,
+    ) -> Self {
         let mut rdp = Self {
             buffer,
             size,
@@ -61,9 +64,11 @@ impl<'a> RdpFontRendererContext<'a> {
             registers: DpCmdRegisters::new(),
             on_disable,
             on_enable,
-            font
+            font,
         };
-        unsafe { rdp.clear_buffer(rdp.size); }
+        unsafe {
+            rdp.clear_buffer(rdp.size);
+        }
         rdp
     }
 
@@ -75,7 +80,11 @@ impl<'a> RdpFontRendererContext<'a> {
     /// clears the buffer starting at offset
     #[inline(always)]
     unsafe fn clear_buffer(&mut self, size: usize) {
-        umemset(self.buffer.add(self.offset) as *mut u8, 0, size*core::mem::size_of::<u32>());
+        umemset(
+            self.buffer.add(self.offset) as *mut u8,
+            0,
+            size * core::mem::size_of::<u32>(),
+        );
     }
 
     unsafe fn send_cmds(&mut self) {
@@ -84,7 +93,9 @@ impl<'a> RdpFontRendererContext<'a> {
         let start = self.buffer.add(self.start);
         let end = self.buffer.add(self.offset);
 
-        if start == end { return; }
+        if start == end {
+            return;
+        }
 
         // wait for rdp
         self.wait_pipe(0);
@@ -145,18 +156,18 @@ impl<'a> RdpFontRendererContext<'a> {
         self.write(color);
 
         // set location
-        self.write(0xF6000000 | ( (bx as u32) << 14 ) | ( (by as u32) << 2 ));
-        self.write(( (tx as u32) << 14 ) | ( (ty as u32) << 2 ));
+        self.write(0xF6000000 | ((bx as u32) << 14) | ((by as u32) << 2));
+        self.write(((tx as u32) << 14) | ((ty as u32) << 2));
     }
 
-    pub unsafe fn texture_mode(&mut self){
+    pub unsafe fn texture_mode(&mut self) {
         self.write(0x2F002830);
         self.write(0x00404040);
         self.write(0x3C0000C1);
         self.write(0x0F2001FF);
     }
 
-    pub unsafe fn load_tile(&mut self, font: &dyn GenericFont, offset: usize){
+    pub unsafe fn load_tile(&mut self, font: &dyn GenericFont, offset: usize) {
         // sync
         self.write(0x27000000);
         self.write(0x00000000);
@@ -179,7 +190,7 @@ impl<'a> RdpFontRendererContext<'a> {
         self.write(0x0001C01C);
 
         // draw rect
-        self.write(0x24000000  | (xh as u32 + w as u32) << 14 | (yh as u32 + h as u32) << 2); // xh+w == xl; yh+h == yl
+        self.write(0x24000000 | (xh as u32 + w as u32) << 14 | (yh as u32 + h as u32) << 2); // xh+w == xl; yh+h == yl
         self.write(0x00000000 | (xh as u32) << 14 | (yh as u32) << 2);
         self.write(0x00000000); // S 0.0 T 0.0
         self.write(0x04000400); // scale factor 1:1
@@ -193,11 +204,11 @@ impl<'a> RdpFontRendererContext<'a> {
     }
 
     fn draw_char(&mut self, c: char, x: i32, y: i32) {
-        if c == '\0' { return; }
+        if c == '\0' {
+            return;
+        }
 
-        let offset = c as usize
-            * CHAR_W
-            * CHAR_H;
+        let offset = c as usize * CHAR_W * CHAR_H;
         unsafe {
             self.load_tile(self.font, offset);
             self.draw_tile(x, y, CHAR_W as i32, CHAR_H as i32);
@@ -240,7 +251,9 @@ impl RenderContext for RdpFontRendererContext<'_> {
             self.texture_mode();
         }
         for c in s {
-            if *c == '\0' { break; }
+            if *c == '\0' {
+                break;
+            }
             self.draw_char(*c, current_x, y);
             current_x += CHAR_W as i32;
         }

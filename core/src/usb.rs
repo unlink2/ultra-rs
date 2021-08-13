@@ -74,7 +74,7 @@ const PIR: *mut PiRegs = PI_BASE_REG as *mut PiRegs;
 
 #[derive(Copy, Clone)]
 pub struct Usb {
-    pub inited: bool
+    pub inited: bool,
 }
 
 impl Usb {
@@ -238,8 +238,11 @@ unsafe fn evd_usb_read(buffer: &mut [u8]) -> Result<(), BiError> {
         if let Err(_) = response {
             break;
         }
-        pi_read(buffer as *mut c_void,
-            ed_regs((REG_USB_DAT + baddr) as *mut u32) as *mut c_void, blen);
+        pi_read(
+            buffer as *mut c_void,
+            ed_regs((REG_USB_DAT + baddr) as *mut u32) as *mut c_void,
+            blen,
+        );
 
         buffer = buffer.offset(blen as isize);
         len -= blen;
@@ -260,7 +263,11 @@ unsafe fn evd_usb_write(buffer: &mut [u8]) -> Result<(), BiError> {
             blen = len;
         }
         let baddr = PACKET_LEN - blen;
-        pi_write(buffer as *mut c_void, ed_regs((REG_USB_DAT + baddr) as *mut u32) as *mut c_void, blen);
+        pi_write(
+            buffer as *mut c_void,
+            ed_regs((REG_USB_DAT + baddr) as *mut u32) as *mut c_void,
+            blen,
+        );
         buffer = buffer.offset(PACKET_LEN as isize);
 
         evd_reg_write(REG_USB_CFG as *mut u32, (USB_CMD_WR | baddr) as u32);

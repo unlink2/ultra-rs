@@ -5,7 +5,8 @@ pub type DisableIntFn = unsafe extern "C" fn() -> usize;
 
 #[naked]
 pub unsafe extern "C" fn disable_int() -> usize {
-    asm!(r#"
+    asm!(
+        r#"
         .set noat
         mfc0 $t0, $12
         addiu $at, $zero, 0xFFFE
@@ -16,12 +17,14 @@ pub unsafe extern "C" fn disable_int() -> usize {
         jr $ra
         nop
     "#,
-    options(noreturn));
+        options(noreturn)
+    );
 }
 
 #[naked]
 pub unsafe extern "C" fn enable_int(flags: usize) {
-    asm!(r#"
+    asm!(
+        r#"
         .set noat
         mfc0 $t0, $12
         or $t0, $t0, $a0
@@ -31,5 +34,6 @@ pub unsafe extern "C" fn enable_int(flags: usize) {
         jr $ra
         nop
     "#,
-    options(noreturn));
+        options(noreturn)
+    );
 }

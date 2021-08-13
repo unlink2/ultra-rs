@@ -18,14 +18,12 @@ pub unsafe extern "C" fn umemset(ptr: *mut u8, value: u8, size: usize) -> *mut u
  */
 #[derive(Copy, Clone)]
 pub struct SharedPtrCell<T> {
-    ptr: *mut T
+    ptr: *mut T,
 }
 
 impl<'a, T> SharedPtrCell<T> {
     pub fn new(ptr: *mut T) -> Self {
-        Self {
-            ptr
-        }
+        Self { ptr }
     }
 
     /**
@@ -44,6 +42,3 @@ impl<'a, T> SharedPtrCell<T> {
         }
     }
 }
-
-
-

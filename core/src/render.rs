@@ -5,8 +5,7 @@ pub trait RenderContext {
     /// this function should flush the
     /// last draw operations to the screen and
     /// clear the buffer
-    fn draw(&mut self) {
-    }
+    fn draw(&mut self) {}
 
     /// the put and draw functions should write to
     /// an internal buffer and that gets drawn to
