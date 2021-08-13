@@ -8,5 +8,5 @@ name = "ultrarscommon"
 path = "src/main.rs"
 
 [dependencies]
-ultra-rs = {path = "../core"}
+ultra-rs = {path = "../lib"}
 
