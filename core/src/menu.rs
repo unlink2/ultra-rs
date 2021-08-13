@@ -1,9 +1,51 @@
 use super::font::*;
 use super::math::*;
+use super::monitor::Monitor;
 use super::render::RenderContext;
 
 pub const MAX_ENTRIES: usize = 15;
 pub const MAX_TITLE_LEN: usize = 15;
+
+pub enum MenuFocus<T>
+where
+    T: Copy + Clone,
+{
+    Menu(Menu<T>),
+    Monitor(Monitor<T>),
+}
+
+impl<T> MenuFocus<T>
+where
+    T: Copy + Clone,
+{
+    pub fn update(&mut self, data: T) {
+        match self {
+            Self::Menu(m) => m.update(data),
+            Self::Monitor(m) => m.update(),
+        }
+    }
+
+    pub fn draw(&mut self, ctxt: &mut dyn RenderContext) {
+        match self {
+            Self::Menu(m) => m.draw(ctxt),
+            Self::Monitor(m) => m.draw(ctxt),
+        }
+    }
+
+    pub fn toggle(&mut self, data: T) {
+        match self {
+            Self::Menu(m) => m.toggle(data),
+            Self::Monitor(m) => m.toggle(data),
+        }
+    }
+
+    pub fn active(&self) -> bool {
+        match self {
+            Self::Menu(m) => m.active,
+            Self::Monitor(m) => m.active,
+        }
+    }
+}
 
 /**
  * An action function that returns either None
