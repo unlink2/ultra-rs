@@ -1,3 +1,5 @@
+use crate::color::Color;
+
 use super::font::*;
 use super::math::*;
 use super::monitor::Monitor;
@@ -133,7 +135,7 @@ where
         }
     }
 
-    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, x: i32, y: i32) {
+    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, x: isize, y: isize) {
         ctxt.cputs(&self.title, x, y);
     }
 
@@ -151,8 +153,8 @@ where
     T: Copy + Clone,
 {
     cursor: isize,
-    x: i32,
-    y: i32,
+    x: isize,
+    y: isize,
     pub active: bool,
     toggle_timer_max: u16,
     toggle_timer: u16,
@@ -170,8 +172,8 @@ where
     T: Copy + Clone,
 {
     pub fn new(
-        x: i32,
-        y: i32,
+        x: isize,
+        y: isize,
         open_action: Entry<T>,
         close_action: Entry<T>,
         back_action: Entry<T>,
@@ -205,8 +207,8 @@ where
             return;
         }
 
-        let start_x: i32 = self.x;
-        let mut start_y: i32 = self.y;
+        let start_x = self.x;
+        let mut start_y = self.y;
 
         let mut counter: isize = 0;
         for entry in &mut self.entries {
@@ -215,10 +217,12 @@ where
             }
 
             if self.cursor == counter {
-                ctxt.puts(">", start_x, start_y);
+                if !ctxt.set_color(Color::new(0xFF, 0x00, 0x00, 0xFF)) {
+                    ctxt.puts(">", start_x, start_y);
+                }
             }
-            entry.draw(ctxt, start_x + CHAR_W as i32 + 2, start_y);
-            start_y += CHAR_H as i32 + 2;
+            entry.draw(ctxt, start_x + CHAR_W as isize + 2 as isize, start_y);
+            start_y += CHAR_H as isize + 2;
 
             counter += 1;
         }

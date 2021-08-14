@@ -203,7 +203,7 @@ impl<'a> RdpFontRendererContext<'a> {
         }
     }
 
-    fn draw_char(&mut self, c: char, x: i32, y: i32) {
+    fn draw_char(&mut self, c: char, x: isize, y: isize) {
         if c == '\0' {
             return;
         }
@@ -211,7 +211,7 @@ impl<'a> RdpFontRendererContext<'a> {
         let offset = c as usize * CHAR_W * CHAR_H;
         unsafe {
             self.load_tile(self.font, offset);
-            self.draw_tile(x, y, CHAR_W as i32, CHAR_H as i32);
+            self.draw_tile(x as i32, y as i32, CHAR_W as i32, CHAR_H as i32);
         }
     }
 }
@@ -234,18 +234,18 @@ impl RenderContext for RdpFontRendererContext<'_> {
         self.start = self.offset;
     }
 
-    fn puts(&mut self, s: &str, x: i32, y: i32) {
+    fn puts(&mut self, s: &str, x: isize, y: isize) {
         let mut current_x = x;
         unsafe {
             self.texture_mode();
         }
         for c in s.chars() {
             self.draw_char(c, current_x, y);
-            current_x += CHAR_W as i32;
+            current_x += CHAR_W as isize;
         }
     }
 
-    fn cputs(&mut self, s: &[char], x: i32, y: i32) {
+    fn cputs(&mut self, s: &[char], x: isize, y: isize) {
         let mut current_x = x;
         unsafe {
             self.texture_mode();
@@ -255,7 +255,7 @@ impl RenderContext for RdpFontRendererContext<'_> {
                 break;
             }
             self.draw_char(*c, current_x, y);
-            current_x += CHAR_W as i32;
+            current_x += CHAR_W as isize;
         }
     }
 }
