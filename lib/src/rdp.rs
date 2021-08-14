@@ -258,4 +258,18 @@ impl RenderContext for RdpFontRendererContext<'_> {
             current_x += CHAR_W as isize;
         }
     }
+
+    fn putsu8(&mut self, s: &[u8], x: isize, y: isize) {
+        let mut current_x = x;
+        unsafe {
+            self.texture_mode();
+        }
+        for c in s {
+            if *c == b'\0' {
+                break;
+            }
+            self.draw_char(*c as char, current_x, y);
+            current_x += CHAR_W as isize;
+        }
+    }
 }

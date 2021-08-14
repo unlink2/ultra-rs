@@ -12,8 +12,14 @@ pub trait RenderContext {
     /// the put and draw functions should write to
     /// an internal buffer and that gets drawn to
     /// the screen during update
+    /// puts a rust string slice to the screen
     fn puts(&mut self, s: &str, x: isize, y: isize);
+
+    /// puts an array of chars
     fn cputs(&mut self, s: &[char], x: isize, y: isize);
+
+    /// puts an array of raw bytes (c-like, null terminated )
+    fn putsu8(&mut self, s: &[u8], x: isize, y: isize);
 
     /// optional method, can be ignored
     /// if not supported

@@ -1,5 +1,7 @@
+use embedgdb::{stream, Stream};
+
 use super::color::Color;
-use super::embedgdb::Parser;
+use super::embedgdb::{BufferedStream, Parser};
 use super::menu::*;
 use super::render::RenderContext;
 use core::ffi::c_void;
@@ -63,7 +65,10 @@ where
     }
 
     pub fn draw(&mut self, ctxt: &mut dyn RenderContext) {
-        ctxt.puts("Monitor", self.x, self.y);
+        let mut stream = BufferedStream::new();
+        let _ = Parser::to_hexu(&(self.addr as usize).to_be_bytes(), &mut stream); // this should not fail!
+        let _ = stream.write(0); // make sure to terminate the string
+        ctxt.putsu8(&stream.buffer, self.x, self.y);
 
         for r in 0..self.rows {
             let offset_hex = Parser::to_hex_tuple(self.calc_offset(0, r) as u8);
@@ -126,11 +131,11 @@ where
     }
 
     pub fn inc_addr(&mut self) {
-        self.addr = unsafe { self.addr.add(0x10) };
+        self.addr = unsafe { self.addr.add(self.bytes_per_row * self.rows) };
     }
 
     pub fn dec_addr(&mut self) {
-        self.addr = unsafe { self.addr.sub(0x10) };
+        self.addr = unsafe { self.addr.sub(self.bytes_per_row * self.rows) };
     }
 
     pub fn inc_value(&mut self) {
