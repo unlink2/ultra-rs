@@ -27,6 +27,14 @@ pub trait RenderContext {
     fn set_color(&mut self, _color: Color) -> bool {
         false
     }
+
+    fn char_width(&self) -> isize {
+        10
+    }
+
+    fn char_height(&self) -> isize {
+        10
+    }
 }
 
 pub trait Drawable<T>
