@@ -1,9 +1,10 @@
 use crate::color::Color;
+use crate::render::Drawable;
 
 use super::font::*;
 use super::math::*;
 use super::monitor::Monitor;
-use super::render::RenderContext;
+use super::render::{RenderContext, Widget};
 
 pub const MAX_ENTRIES: usize = 15;
 pub const MAX_TITLE_LEN: usize = 15;
@@ -16,35 +17,77 @@ where
     Monitor(Monitor<T>),
 }
 
-impl<T> MenuFocus<T>
+impl<T> Widget<T> for MenuFocus<T>
 where
     T: Copy + Clone,
 {
-    pub fn update(&mut self, data: T) {
-        match self {
-            Self::Menu(m) => m.update(data),
-            Self::Monitor(m) => m.update(),
-        }
-    }
-
-    pub fn draw(&mut self, ctxt: &mut dyn RenderContext) {
-        match self {
-            Self::Menu(m) => m.draw(ctxt),
-            Self::Monitor(m) => m.draw(ctxt),
-        }
-    }
-
-    pub fn toggle(&mut self, data: T) {
+    fn toggle(&mut self, data: T) {
         match self {
             Self::Menu(m) => m.toggle(data),
             Self::Monitor(m) => m.toggle(data),
         }
     }
 
+    fn active(&self) -> bool {
+        match self {
+            Self::Menu(m) => m.active(),
+            Self::Monitor(m) => m.active(),
+        }
+    }
+}
+
+impl<T> Drawable<T> for MenuFocus<T>
+where
+    T: Copy + Clone,
+{
+    fn update(&mut self, data: T) {
+        match self {
+            Self::Menu(m) => m.update(data),
+            Self::Monitor(m) => m.update(data),
+        }
+    }
+
+    fn draw(&mut self, ctxt: &mut dyn RenderContext) {
+        match self {
+            Self::Menu(m) => m.draw(ctxt),
+            Self::Monitor(m) => m.draw(ctxt),
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub enum EntryTypes<T>
+where
+    T: Copy + Clone,
+{
+    Button(Entry<T>),
+}
+
+impl<T> EntryTypes<T>
+where
+    T: Copy + Clone,
+{
+    pub fn activate(&mut self, data: T) {
+        match self {
+            EntryTypes::Button(b) => b.activate(data),
+        }
+    }
+
     pub fn active(&self) -> bool {
         match self {
-            Self::Menu(m) => m.active,
-            Self::Monitor(m) => m.active,
+            EntryTypes::Button(b) => b.active,
+        }
+    }
+
+    pub fn draw(&mut self, ctxt: &mut dyn RenderContext, x: isize, y: isize) {
+        match self {
+            EntryTypes::Button(b) => b.draw(ctxt, x, y),
+        }
+    }
+
+    pub fn call_update(&mut self, data: T) {
+        match self {
+            EntryTypes::Button(b) => b.call_update(data),
         }
     }
 }
@@ -74,31 +117,36 @@ impl<T> Entry<T>
 where
     T: Copy + Clone,
 {
-    pub fn empty() -> Self {
-        Self {
+    pub fn empty() -> EntryTypes<T> {
+        EntryTypes::Button(Self {
             title: ['1'; MAX_TITLE_LEN],
             update: no_op,
             action: no_op,
             active: false,
-        }
+        })
     }
 
-    pub fn new(title: &str, update: EntryFn<T>, action: EntryFn<T>) -> Self {
+    pub fn new(title: &str, update: EntryFn<T>, action: EntryFn<T>) -> EntryTypes<T> {
         let mut title_ca = ['\0'; MAX_TITLE_LEN];
 
         for i in 0..min(MAX_TITLE_LEN, title.len()) {
             title_ca[i] = title.chars().nth(i).unwrap_or('\0');
         }
 
-        Self {
+        EntryTypes::Button(Self {
             title: title_ca,
             update,
             action,
             active: true,
-        }
+        })
     }
 
-    pub fn checkbox(title: &str, update: EntryFn<T>, action: EntryFn<T>, value: bool) -> Self {
+    pub fn checkbox(
+        title: &str,
+        update: EntryFn<T>,
+        action: EntryFn<T>,
+        value: bool,
+    ) -> EntryTypes<T> {
         let mut title_ca = ['\0'; MAX_TITLE_LEN];
 
         title_ca[0] = '[';
@@ -112,12 +160,12 @@ where
             title_ca[i] = title.chars().nth(i - 3).unwrap_or('\0');
         }
 
-        Self {
+        EntryTypes::Button(Self {
             title: title_ca,
             update,
             action,
             active: true,
-        }
+        })
     }
 
     pub fn set_checkbox(&mut self, value: bool) {
@@ -159,11 +207,11 @@ where
     toggle_timer_max: u16,
     toggle_timer: u16,
 
-    open_action: Entry<T>,
-    close_action: Entry<T>,
-    back_action: Entry<T>,
-    update_action: Entry<T>,
-    entries: [Entry<T>; MAX_ENTRIES],
+    open_action: EntryTypes<T>,
+    close_action: EntryTypes<T>,
+    back_action: EntryTypes<T>,
+    update_action: EntryTypes<T>,
+    entries: [EntryTypes<T>; MAX_ENTRIES],
     active_entries: usize,
 }
 
@@ -174,11 +222,11 @@ where
     pub fn new(
         x: isize,
         y: isize,
-        open_action: Entry<T>,
-        close_action: Entry<T>,
-        back_action: Entry<T>,
-        update_action: Entry<T>,
-        entries_proto: &[Entry<T>],
+        open_action: EntryTypes<T>,
+        close_action: EntryTypes<T>,
+        back_action: EntryTypes<T>,
+        update_action: EntryTypes<T>,
+        entries_proto: &[EntryTypes<T>],
     ) -> Self {
         let mut entries = [Entry::empty(); MAX_ENTRIES];
 
@@ -199,51 +247,6 @@ where
             y,
             entries,
             active_entries: entries_proto.len(),
-        }
-    }
-
-    pub fn draw(&mut self, ctxt: &mut dyn RenderContext) {
-        if !self.active {
-            return;
-        }
-
-        let start_x = self.x;
-        let mut start_y = self.y;
-
-        let mut counter: isize = 0;
-        for entry in &mut self.entries {
-            if !entry.active {
-                continue;
-            }
-
-            if self.cursor == counter {
-                if !ctxt.set_color(Color::new(0xFF, 0x00, 0x00, 0xFF)) {
-                    ctxt.puts(">", start_x, start_y);
-                }
-            }
-            entry.draw(ctxt, start_x + CHAR_W as isize + 2 as isize, start_y);
-            start_y += CHAR_H as isize + 2;
-
-            counter += 1;
-        }
-    }
-
-    pub fn update(&mut self, data: T) {
-        if self.toggle_timer > 0 {
-            self.toggle_timer -= 1;
-        }
-        if !self.active {
-            return;
-        }
-
-        self.update_action.activate(data);
-
-        for entry in &mut self.entries {
-            if !entry.active {
-                continue;
-            }
-
-            entry.call_update(data);
         }
     }
 
@@ -283,8 +286,63 @@ where
         self.toggle_timer = 0;
         self.back_action.activate(data);
     }
+}
 
-    pub fn toggle(&mut self, data: T) {
+impl<T> Drawable<T> for Menu<T>
+where
+    T: Copy + Clone,
+{
+    fn draw(&mut self, ctxt: &mut dyn RenderContext) {
+        if !self.active {
+            return;
+        }
+
+        let start_x = self.x;
+        let mut start_y = self.y;
+
+        let mut counter: isize = 0;
+        for entry in &mut self.entries {
+            if !entry.active() {
+                continue;
+            }
+
+            if self.cursor == counter {
+                if !ctxt.set_color(Color::new(0xFF, 0x00, 0x00, 0xFF)) {
+                    ctxt.puts(">", start_x, start_y);
+                }
+            }
+            entry.draw(ctxt, start_x + CHAR_W as isize + 2 as isize, start_y);
+            start_y += CHAR_H as isize + 2;
+
+            counter += 1;
+        }
+    }
+
+    fn update(&mut self, data: T) {
+        if self.toggle_timer > 0 {
+            self.toggle_timer -= 1;
+        }
+        if !self.active {
+            return;
+        }
+
+        self.update_action.activate(data);
+
+        for entry in &mut self.entries {
+            if !entry.active() {
+                continue;
+            }
+
+            entry.call_update(data);
+        }
+    }
+}
+
+impl<T> Widget<T> for Menu<T>
+where
+    T: Copy + Clone,
+{
+    fn toggle(&mut self, data: T) {
         if self.toggle_timer > 0 {
             return;
         }
@@ -295,5 +353,9 @@ where
         } else {
             self.open(data);
         }
+    }
+
+    fn active(&self) -> bool {
+        self.active
     }
 }

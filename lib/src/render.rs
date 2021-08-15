@@ -28,3 +28,20 @@ pub trait RenderContext {
         false
     }
 }
+
+pub trait Drawable<T>
+where
+    T: Copy + Clone,
+{
+    fn draw(&mut self, ctxt: &mut dyn RenderContext);
+
+    fn update(&mut self, data: T);
+}
+
+pub trait Widget<T>
+where
+    T: Copy + Clone,
+{
+    fn toggle(&mut self, data: T);
+    fn active(&self) -> bool;
+}

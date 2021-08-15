@@ -9,6 +9,7 @@ pub mod color;
 pub mod font;
 pub mod input;
 pub mod interrupt;
+pub mod keyboard;
 pub mod math;
 pub mod memory;
 pub mod menu;

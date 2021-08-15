@@ -1,9 +1,9 @@
-use embedgdb::{stream, Stream};
+use embedgdb::Stream;
 
 use super::color::Color;
 use super::embedgdb::{BufferedStream, Parser};
 use super::menu::*;
-use super::render::RenderContext;
+use super::render::{Drawable, RenderContext, Widget};
 use core::ffi::c_void;
 
 #[derive(Copy, Clone)]
@@ -20,9 +20,9 @@ where
     bytes_per_row: usize,
     toggle_timer_max: u16,
     toggle_timer: u16,
-    close_action: Entry<T>,
-    back_action: Entry<T>,
-    open_action: Entry<T>,
+    close_action: EntryTypes<T>,
+    back_action: EntryTypes<T>,
+    open_action: EntryTypes<T>,
     cursor_x: usize,
     cursor_y: usize,
 }
@@ -34,9 +34,9 @@ where
     pub fn new(
         x: isize,
         y: isize,
-        open_action: Entry<T>,
-        close_action: Entry<T>,
-        back_action: Entry<T>,
+        open_action: EntryTypes<T>,
+        close_action: EntryTypes<T>,
+        back_action: EntryTypes<T>,
     ) -> Self {
         Self {
             x,
@@ -52,51 +52,6 @@ where
             back_action,
             cursor_x: 0,
             cursor_y: 0,
-        }
-    }
-
-    pub fn update(&mut self) {
-        if self.toggle_timer > 0 {
-            self.toggle_timer -= 1;
-        }
-        if !self.active {
-            return;
-        }
-    }
-
-    pub fn draw(&mut self, ctxt: &mut dyn RenderContext) {
-        let mut stream = BufferedStream::new();
-        let _ = Parser::to_hexu(&(self.addr as usize).to_be_bytes(), &mut stream); // this should not fail!
-        let _ = stream.write(0); // make sure to terminate the string
-        ctxt.putsu8(&stream.buffer, self.x, self.y);
-
-        for r in 0..self.rows {
-            let offset_hex = Parser::to_hex_tuple(self.calc_offset(0, r) as u8);
-
-            let addr_offset = [offset_hex.0 as char, offset_hex.1 as char];
-            let y = self.y as isize + 8 * (r as isize + 1);
-
-            ctxt.set_color(Color::new(0xFF, 0xFF, 0x00, 0xFF));
-            ctxt.cputs(&addr_offset, self.x as isize, y);
-
-            for c in 0..self.bytes_per_row {
-                let address = unsafe { self.addr.add(self.calc_offset(c, r)) };
-                let value = if address as usize >= 0x80000000 && (address as usize) < 0x807FFFFF {
-                    unsafe { *(address as *const u8) }
-                } else {
-                    0
-                };
-
-                let x = self.x as isize + 24 * (c as isize + 1);
-
-                if self.cursor_x == c && self.cursor_y == r {
-                    ctxt.set_color(Color::new(0xFF, 0x00, 0x00, 0xFF));
-                }
-
-                let value_hex = Parser::to_hex_tuple(value);
-                let value_str = [value_hex.0 as char, value_hex.1 as char];
-                ctxt.cputs(&value_str, x, y);
-            }
         }
     }
 
@@ -175,7 +130,66 @@ where
         self.back_action.activate(data);
     }
 
-    pub fn toggle(&mut self, data: T) {
+    fn calc_offset(&self, x: usize, y: usize) -> usize {
+        y * self.bytes_per_row + x
+    }
+}
+
+impl<T> Drawable<T> for Monitor<T>
+where
+    T: Copy + Clone,
+{
+    fn update(&mut self, data: T) {
+        if self.toggle_timer > 0 {
+            self.toggle_timer -= 1;
+        }
+        if !self.active {
+            return;
+        }
+    }
+
+    fn draw(&mut self, ctxt: &mut dyn RenderContext) {
+        let mut stream = BufferedStream::new();
+        let _ = Parser::to_hexu(&(self.addr as usize).to_be_bytes(), &mut stream); // this should not fail!
+        let _ = stream.write(0); // make sure to terminate the string
+        ctxt.putsu8(&stream.buffer, self.x, self.y);
+
+        for r in 0..self.rows {
+            let offset_hex = Parser::to_hex_tuple(self.calc_offset(0, r) as u8);
+
+            let addr_offset = [offset_hex.0 as char, offset_hex.1 as char];
+            let y = self.y as isize + 8 * (r as isize + 1);
+
+            ctxt.set_color(Color::new(0xFF, 0xFF, 0x00, 0xFF));
+            ctxt.cputs(&addr_offset, self.x as isize, y);
+
+            for c in 0..self.bytes_per_row {
+                let address = unsafe { self.addr.add(self.calc_offset(c, r)) };
+                let value = if address as usize >= 0x80000000 && (address as usize) < 0x807FFFFF {
+                    unsafe { *(address as *const u8) }
+                } else {
+                    0
+                };
+
+                let x = self.x as isize + 24 * (c as isize + 1);
+
+                if self.cursor_x == c && self.cursor_y == r {
+                    ctxt.set_color(Color::new(0xFF, 0x00, 0x00, 0xFF));
+                }
+
+                let value_hex = Parser::to_hex_tuple(value);
+                let value_str = [value_hex.0 as char, value_hex.1 as char];
+                ctxt.cputs(&value_str, x, y);
+            }
+        }
+    }
+}
+
+impl<T> Widget<T> for Monitor<T>
+where
+    T: Copy + Clone,
+{
+    fn toggle(&mut self, data: T) {
         if self.toggle_timer > 0 {
             return;
         }
@@ -188,7 +202,7 @@ where
         }
     }
 
-    fn calc_offset(&self, x: usize, y: usize) -> usize {
-        y * self.bytes_per_row + x
+    fn active(&self) -> bool {
+        self.active
     }
 }
