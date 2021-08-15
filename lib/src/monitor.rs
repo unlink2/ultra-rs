@@ -1,6 +1,6 @@
 use embedgdb::Stream;
 
-use crate::keyboard::{Keyboard, HEX};
+use crate::keyboard::{self, Keyboard, HEX};
 
 use super::color::Color;
 use super::embedgdb::{BufferedStream, Parser};
@@ -26,7 +26,7 @@ where
     open_action: EntryTypes<T>,
     cursor_x: usize,
     cursor_y: usize,
-    addr_buffer: [u8; 16],
+    addr_buffer: [u8; 8],
     keyboard: Keyboard<'static, T>,
 }
 
@@ -55,72 +55,116 @@ where
             back_action,
             cursor_x: 0,
             cursor_y: 0,
-            addr_buffer: [0; 16],
+            addr_buffer: [0; 8],
             keyboard: Keyboard::new(x, y, &HEX),
         }
     }
 
     pub fn left(&mut self) {
-        if self.cursor_x == 0 {
-            self.cursor_x = self.bytes_per_row - 1;
+        if !self.keyboard.active() {
+            if self.cursor_x == 0 {
+                self.cursor_x = self.bytes_per_row - 1;
+            } else {
+                self.cursor_x -= 1;
+            }
         } else {
-            self.cursor_x -= 1;
+            self.keyboard.left();
         }
     }
 
     pub fn right(&mut self) {
-        self.cursor_x += 1;
-        if self.cursor_x >= self.bytes_per_row {
-            self.cursor_x = 0;
+        if !self.keyboard.active() {
+            self.cursor_x += 1;
+            if self.cursor_x >= self.bytes_per_row {
+                self.cursor_x = 0;
+            }
+        } else {
+            self.keyboard.right();
         }
     }
 
     pub fn up(&mut self) {
-        if self.cursor_y == 0 {
-            self.cursor_y = self.rows - 1;
+        if !self.keyboard.active() {
+            if self.cursor_y == 0 {
+                self.cursor_y = self.rows - 1;
+            } else {
+                self.cursor_y -= 1;
+            }
         } else {
-            self.cursor_y -= 1;
+            self.keyboard.up();
         }
     }
 
     pub fn down(&mut self) {
-        self.cursor_y += 1;
-        if self.cursor_y >= self.rows {
-            self.cursor_y = 0;
+        if !self.keyboard.active() {
+            self.cursor_y += 1;
+            if self.cursor_y >= self.rows {
+                self.cursor_y = 0;
+            }
+        } else {
+            self.keyboard.down();
         }
     }
 
     pub fn inc_addr(&mut self) {
-        self.addr = unsafe { self.addr.add(self.bytes_per_row * self.rows) };
+        if !self.keyboard.active() {
+            self.addr = unsafe { self.addr.add(self.bytes_per_row * self.rows) };
+        }
     }
 
     pub fn dec_addr(&mut self) {
-        self.addr = unsafe { self.addr.sub(self.bytes_per_row * self.rows) };
+        if !self.keyboard.active() {
+            self.addr = unsafe { self.addr.sub(self.bytes_per_row * self.rows) };
+        }
     }
 
     pub fn inc_value(&mut self) {
-        let addr = unsafe {
-            self.addr
-                .add(self.calc_offset(self.cursor_x, self.cursor_y))
-        };
+        if !self.keyboard.active() {
+            let addr = unsafe {
+                self.addr
+                    .add(self.calc_offset(self.cursor_x, self.cursor_y))
+            };
 
-        unsafe {
-            *(addr as *mut u8) += 1;
+            unsafe {
+                *(addr as *mut u8) += 1;
+            }
         }
     }
 
     pub fn dec_value(&mut self) {
-        let addr = unsafe {
-            self.addr
-                .add(self.calc_offset(self.cursor_x, self.cursor_y))
-        };
+        if !self.keyboard.active() {
+            let addr = unsafe {
+                self.addr
+                    .add(self.calc_offset(self.cursor_x, self.cursor_y))
+            };
 
-        unsafe {
-            *(addr as *mut u8) -= 1;
+            unsafe {
+                *(addr as *mut u8) -= 1;
+            }
+        }
+    }
+
+    pub fn select(&mut self) {
+        if self.keyboard.active() {
+            self.keyboard.select(&mut self.addr_buffer);
+        }
+    }
+
+    pub fn enter(&mut self) {
+        if self.keyboard.active() {
+            self.keyboard.enter();
+        } else {
+            self.value_input();
         }
     }
 
     pub fn addr_input(&mut self) {
+        self.keyboard.reset(&mut self.addr_buffer, 0);
+        self.keyboard.active = true;
+    }
+
+    pub fn value_input(&mut self) {
+        self.keyboard.reset(&mut self.addr_buffer, 1);
         self.keyboard.active = true;
     }
 
@@ -135,8 +179,12 @@ where
     }
 
     pub fn back(&mut self, data: T) {
-        self.toggle_timer = 0;
-        self.back_action.activate(data);
+        if self.keyboard.active() {
+            self.keyboard.back(&mut self.addr_buffer);
+        } else {
+            self.toggle_timer = 0;
+            self.back_action.activate(data);
+        }
     }
 
     fn calc_offset(&self, x: usize, y: usize) -> usize {
@@ -159,12 +207,30 @@ where
 
         if self.keyboard.active() {
             self.keyboard.update(data);
-            return;
+        } else if self.keyboard.enter {
+            self.keyboard.enter = false;
+            match self.keyboard.tag {
+                0 => {
+                    // this input cannot fail again
+                    let addr = Parser::from_hexu(&self.addr_buffer).unwrap();
+                    self.addr = addr as *mut c_void;
+                }
+                _ => {
+                    let value = Parser::from_hexu(&self.addr_buffer).unwrap() as u8;
+                    unsafe {
+                        *(self
+                            .addr
+                            .add(self.calc_offset(self.cursor_x, self.cursor_y))
+                            as *mut u8) = value;
+                    }
+                }
+            }
         }
     }
 
     fn draw(&mut self, ctxt: &mut dyn RenderContext) {
         if self.keyboard.active() && self.active {
+            self.keyboard.draw_buffer(ctxt, &self.addr_buffer);
             self.keyboard.draw(ctxt);
         } else {
             let mut stream = BufferedStream::new();

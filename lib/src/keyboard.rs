@@ -20,6 +20,7 @@ where
     position: usize,
     pub active: bool,
     pub enter: bool,
+    pub tag: u8, // 8 bit tag to identify the input type
     grid: &'a [&'a [u8]],
     phantom: PhantomData<T>,
 }
@@ -37,6 +38,7 @@ where
             active: false,
             enter: false,
             grid,
+            tag: 0,
             position: 0,
             phantom: PhantomData,
         }
@@ -77,9 +79,9 @@ where
         }
     }
 
-    pub fn select(&mut self, buffer: &'a mut [u8]) {
-        if self.position <= buffer.len() {
-            buffer[self.position] = self.grid[self.cursor_x][self.cursor_y];
+    pub fn select(&mut self, buffer: &mut [u8]) {
+        if self.position < buffer.len() {
+            buffer[self.position] = self.grid[self.cursor_y][self.cursor_x];
             self.position += 1;
         }
     }
@@ -89,7 +91,7 @@ where
         self.enter = true;
     }
 
-    pub fn back(&mut self, buffer: &'a mut [u8]) {
+    pub fn back(&mut self, buffer: &mut [u8]) {
         if self.position > 0 {
             self.position -= 1;
             buffer[self.position] = b'\0';
@@ -97,6 +99,16 @@ where
             self.active = false;
             self.enter = false;
         }
+    }
+
+    pub fn reset(&mut self, buffer: &mut [u8], tag: u8) {
+        self.position = 0;
+        self.tag = tag;
+        buffer.fill(0);
+    }
+
+    pub fn draw_buffer(&mut self, ctxt: &mut dyn RenderContext, buffer: &[u8]) {
+        ctxt.putsu8(buffer, self.pos_x, self.pos_y);
     }
 }
 
@@ -113,8 +125,8 @@ where
                 let cstr = [*col, b'\0'];
                 ctxt.putsu8(
                     &cstr,
-                    self.pos_x * x as isize * ctxt.char_width(),
-                    self.pos_y * y as isize * ctxt.char_height(),
+                    self.pos_x + x as isize * ctxt.char_width(),
+                    self.pos_y + y as isize * ctxt.char_height() + 2 * ctxt.char_height(),
                 );
             }
         }
