@@ -211,18 +211,17 @@ where
             self.keyboard.enter = false;
             match self.keyboard.tag {
                 0 => {
-                    // this input cannot fail again
-                    let addr = Parser::from_hexu(&self.addr_buffer).unwrap();
+                    // this input cannot fail because of the restricted keyboard input
+                    let addr = Parser::from_hexu(&self.addr_buffer).unwrap_or(0);
                     self.addr = addr as *mut c_void;
                 }
                 _ => {
-                    let value = Parser::from_hexu(&self.addr_buffer).unwrap() as u8;
-                    unsafe {
-                        *(self
-                            .addr
+                    let value = Parser::from_hexu(&self.addr_buffer).unwrap_or(0) as u8;
+                    let addr = unsafe {
+                        self.addr
                             .add(self.calc_offset(self.cursor_x, self.cursor_y))
-                            as *mut u8) = value;
-                    }
+                    };
+                    unsafe { *(addr as *mut u8) = value };
                 }
             }
         }
@@ -239,7 +238,8 @@ where
             ctxt.putsu8(&stream.buffer, self.x, self.y);
 
             for r in 0..self.rows {
-                let offset_hex = Parser::to_hex_tuple(self.calc_offset(0, r) as u8);
+                let offset_hex =
+                    Parser::to_hex_tuple(unsafe { self.addr.add(self.calc_offset(0, r)) as u8 });
 
                 let addr_offset = [offset_hex.0 as char, offset_hex.1 as char];
                 let y = self.y as isize + ctxt.char_height() * (r as isize + 1);
