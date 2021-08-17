@@ -21,6 +21,13 @@ pub trait RenderContext {
     /// puts an array of raw bytes (c-like, null terminated )
     fn putsu8(&mut self, s: &[u8], x: isize, y: isize);
 
+    /// if the renderer does not support all ascii
+    /// characters override this convert method to allow dynamic
+    /// conversion of values to printable characters
+    fn convert(&self, c: u8) -> u8 {
+        c
+    }
+
     /// optional method, can be ignored
     /// if not supported
     /// return false whenever color is not supported

@@ -28,6 +28,7 @@ where
     cursor_y: usize,
     addr_buffer: [u8; 8],
     keyboard: Keyboard<'static, T>,
+    ascii_mode: bool,
 }
 
 impl<T> Monitor<T>
@@ -57,6 +58,7 @@ where
             cursor_y: 0,
             addr_buffer: [0; 8],
             keyboard: Keyboard::new(x, y, &HEX),
+            ascii_mode: false,
         }
     }
 
@@ -156,6 +158,10 @@ where
         } else {
             self.value_input();
         }
+    }
+
+    pub fn toggle_ascii(&mut self) {
+        self.ascii_mode = !self.ascii_mode;
     }
 
     pub fn addr_input(&mut self) {
@@ -262,8 +268,12 @@ where
                         ctxt.set_color(Color::new(0xFF, 0x00, 0x00, 0xFF));
                     }
 
-                    let value_hex = Parser::to_hex_tuple(value);
-                    let value_str = [value_hex.0 as char, value_hex.1 as char];
+                    let value_str = if self.ascii_mode {
+                        [ctxt.convert(value) as char, 0 as char]
+                    } else {
+                        let value_hex = Parser::to_hex_tuple(value);
+                        [value_hex.0 as char, value_hex.1 as char]
+                    };
                     ctxt.cputs(&value_str, x, y);
                 }
             }
