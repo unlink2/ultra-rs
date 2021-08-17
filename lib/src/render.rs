@@ -60,3 +60,52 @@ where
     fn toggle(&mut self, data: T);
     fn active(&self) -> bool;
 }
+
+/***
+ * Helper functions for rendering
+ */
+
+/// reverses a buffer until end of null termination
+fn reverse_buffer(buffer: &mut [u8], len: usize) {
+    let mut i = 0;
+    let mut j = len - 1;
+
+    while i < j {
+        let tmp = buffer[i];
+        buffer[i] = buffer[j];
+        buffer[j] = tmp;
+        i += 1;
+        j -= 1;
+    }
+}
+
+pub fn to_decimal(org_value: isize, buffer: &mut [u8]) {
+    if org_value == 0 {
+        buffer[0] = b'0';
+        buffer[1] = b'\0';
+    } else {
+        let mut i = 0;
+        let mut value = org_value;
+
+        buffer.fill(0);
+        while value > 0 && i < buffer.len() {
+            buffer[i] = (value % 10 + '0' as isize) as u8;
+            i += 1;
+            value = value / 10;
+        }
+
+        if i < buffer.len() {
+            if org_value < 0 {
+                buffer[i] = b'-';
+                i += 1;
+            }
+        }
+
+        reverse_buffer(buffer, i);
+
+        // terminate
+        if i < buffer.len() {
+            buffer[i] = 0;
+        }
+    }
+}

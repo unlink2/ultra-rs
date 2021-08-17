@@ -16,4 +16,5 @@ pub mod menu;
 pub mod monitor;
 pub mod rdp;
 pub mod render;
+pub mod timer;
 pub mod usb;
