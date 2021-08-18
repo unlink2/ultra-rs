@@ -5,6 +5,7 @@
 
 extern crate embedgdb;
 
+pub mod clone;
 pub mod color;
 pub mod font;
 pub mod input;

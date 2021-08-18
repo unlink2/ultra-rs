@@ -8,6 +8,15 @@ pub unsafe extern "C" fn umemset(ptr: *mut u8, value: u8, size: usize) -> *mut u
     return ptr;
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn umemcpy(dst: *mut u8, src: *const u8, size: usize) {
+    let mut i = 0;
+    while i < size {
+        *dst.add(i) = *src.add(i);
+        i += 1;
+    }
+}
+
 /**
  * Simple shared reference implementation
  * no bells and whistles, just a way to pass
