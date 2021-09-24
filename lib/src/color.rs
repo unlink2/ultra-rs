@@ -1,3 +1,6 @@
+/**
+ * Describes a color in rgba
+ */
 #[derive(Copy, Clone)]
 pub struct Color {
     pub red: u8,

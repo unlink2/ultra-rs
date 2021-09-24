@@ -71,9 +71,7 @@ fn reverse_buffer(buffer: &mut [u8], len: usize) {
     let mut j = len - 1;
 
     while i < j {
-        let tmp = buffer[i];
-        buffer[i] = buffer[j];
-        buffer[j] = tmp;
+        buffer.swap(i, j);
         i += 1;
         j -= 1;
     }
@@ -91,7 +89,7 @@ pub fn to_decimal(org_value: isize, buffer: &mut [u8]) {
         while value > 0 && i < buffer.len() {
             buffer[i] = (value % 10 + '0' as isize) as u8;
             i += 1;
-            value = value / 10;
+            value /= 10;
         }
 
         if i < buffer.len() {

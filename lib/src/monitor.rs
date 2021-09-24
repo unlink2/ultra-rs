@@ -8,6 +8,10 @@ use super::menu::*;
 use super::render::{Drawable, RenderContext, Widget};
 use core::ffi::c_void;
 
+/**
+ * This is a memory monitor
+ * that can browse wram
+ */
 pub struct Monitor<T>
 where
     T: Copy + Clone,

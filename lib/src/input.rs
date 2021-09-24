@@ -1,3 +1,6 @@
+/**
+ * Describes all buttons on the n64 controller
+ */
 #[derive(Clone, Copy)]
 pub enum Button {
     RInput = 0x14,
@@ -16,14 +19,21 @@ pub enum Button {
     DpadLeft = 0x19,
 }
 
+/**
+ * Describes the x and y axis
+ */
 pub enum Axis {
     XAxis = 0x01,
     YAxis = 0x00,
 }
 
+/// Registers for controller reading
 pub const CONTROLLER1: *mut u32 = 0xBFC007C4 as *mut u32;
 pub const CONTROLLER2: *mut u32 = 0xBFC007CC as *mut u32;
 
+/**
+ * Handles an input
+ */
 pub struct InputHandler {
     controller: *mut u32,
     current: u32,

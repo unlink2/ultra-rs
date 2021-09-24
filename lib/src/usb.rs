@@ -77,9 +77,15 @@ pub struct Usb {
     pub inited: bool,
 }
 
+impl Default for Usb {
+    fn default() -> Self {
+        Self { inited: false }
+    }
+}
+
 impl Usb {
     pub fn new() -> Self {
-        Self { inited: false }
+        Self::default()
     }
 
     pub fn init(&mut self) {
@@ -201,7 +207,7 @@ unsafe fn evd_usb_init() {
     // flush fifo buffer
     while evd_usb_can_read() {
         let response = evd_usb_read(&mut buffer);
-        if let Err(_) = response {
+        if response.is_err() {
             break;
         }
     }
@@ -235,7 +241,7 @@ unsafe fn evd_usb_read(buffer: &mut [u8]) -> Result<(), BiError> {
 
         response = evd_usb_busy();
 
-        if let Err(_) = response {
+        if response.is_err() {
             break;
         }
         pi_read(
@@ -244,11 +250,11 @@ unsafe fn evd_usb_read(buffer: &mut [u8]) -> Result<(), BiError> {
             blen,
         );
 
-        buffer = buffer.offset(blen as isize);
+        buffer = buffer.add(blen);
         len -= blen;
     }
 
-    return response;
+    response
 }
 
 unsafe fn evd_usb_write(buffer: &mut [u8]) -> Result<(), BiError> {
@@ -268,19 +274,19 @@ unsafe fn evd_usb_write(buffer: &mut [u8]) -> Result<(), BiError> {
             ed_regs((REG_USB_DAT + baddr) as *mut u32) as *mut c_void,
             blen,
         );
-        buffer = buffer.offset(PACKET_LEN as isize);
+        buffer = buffer.add(PACKET_LEN);
 
         evd_reg_write(REG_USB_CFG as *mut u32, (USB_CMD_WR | baddr) as u32);
 
         response = evd_usb_busy();
-        if let Err(_) = response {
+        if response.is_err() {
             break;
         }
 
         len -= blen;
     }
 
-    return response;
+    response
 }
 
 unsafe fn evd_usb_busy() -> Result<(), BiError> {
@@ -296,7 +302,7 @@ unsafe fn evd_usb_busy() -> Result<(), BiError> {
         return Err(BiError::BiErrUbsTout);
     }
 
-    return Ok(());
+    Ok(())
 }
 
 unsafe fn evd_set_save_type(stype: usize) {

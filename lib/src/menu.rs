@@ -9,6 +9,10 @@ use super::render::{RenderContext, Widget};
 pub const MAX_ENTRIES: usize = 15;
 pub const MAX_TITLE_LEN: usize = 15;
 
+/**
+ * This is a simple windowing system
+ * It holds any menu-like object for easy switching
+ */
 pub enum MenuFocus<T>
 where
     T: Copy + Clone,
@@ -110,7 +114,7 @@ where
 }
 
 pub fn no_op<T: Copy + Clone>(_entry: &mut Entry<T>, _data: T) -> Option<usize> {
-    return None;
+    None
 }
 
 impl<T> Entry<T>
@@ -126,6 +130,7 @@ where
         })
     }
 
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(title: &str, update: EntryFn<T>, action: EntryFn<T>) -> EntryTypes<T> {
         let mut title_ca = ['\0'; MAX_TITLE_LEN];
 
@@ -219,6 +224,7 @@ impl<T> Menu<T>
 where
     T: Copy + Clone,
 {
+    #[allow(clippy::manual_memcpy)]
     pub fn new(
         x: isize,
         y: isize,
@@ -311,7 +317,7 @@ where
                     ctxt.puts(">", start_x, start_y);
                 }
             }
-            entry.draw(ctxt, start_x + CHAR_W as isize + 2 as isize, start_y);
+            entry.draw(ctxt, start_x + CHAR_W as isize + 2_isize, start_y);
             start_y += CHAR_H as isize + 2;
 
             counter += 1;

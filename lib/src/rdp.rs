@@ -72,6 +72,8 @@ impl<'a> RdpFontRendererContext<'a> {
         rdp
     }
 
+    // the values are registrs and do change in the loop
+    #[allow(clippy::while_immutable_condition)]
     #[inline(always)]
     unsafe fn wait_pipe(&mut self, other: u32) {
         while ((*self.registers).status as u32 & (0x600 | other)) > 0 {}
@@ -119,37 +121,45 @@ impl<'a> RdpFontRendererContext<'a> {
         (self.on_enable)(previ);
     }
 
+    /// # Safety
     #[inline(always)]
     unsafe fn write(&mut self, value: u32) {
         *self.buffer.add(self.offset) = value;
         self.offset += 1;
     }
 
+    /// # Safety
     pub unsafe fn sync_full(&mut self) {
         self.write(0x29000000);
         self.write(0x00000000);
     }
 
+    /// # Safety
     pub unsafe fn sync_pipe(&mut self) {
         self.write(0x27000000);
         self.write(0x00000000);
     }
 
+    /// # Safety
     pub unsafe fn sync_load(&mut self) {
         self.write(0x31000000);
         self.write(0x00000000);
     }
 
+    /// # Safety
     pub unsafe fn sync_tile(&mut self) {
         self.write(0x28000000);
         self.write(0x00000000);
     }
 
+    /// # Safety
     pub unsafe fn draw_primitives(&mut self) {
         self.write(0xEFB000FF);
         self.write(0x00004004);
     }
 
+    /// # Safety
+    /// draw a rectangle
     pub unsafe fn draw_rect(&mut self, color: u32, tx: i32, ty: i32, bx: i32, by: i32) {
         // set color
         self.write(0xF7000000);
@@ -160,6 +170,8 @@ impl<'a> RdpFontRendererContext<'a> {
         self.write(((tx as u32) << 14) | ((ty as u32) << 2));
     }
 
+    /// # Safety
+    /// set rdp to texture mode
     pub unsafe fn texture_mode(&mut self) {
         self.write(0x2F002830);
         self.write(0x00404040);
@@ -167,6 +179,8 @@ impl<'a> RdpFontRendererContext<'a> {
         self.write(0x0F2001FF);
     }
 
+    /// # Safety
+    /// Load a tile
     pub unsafe fn load_tile(&mut self, font: &dyn GenericFont, offset: usize) {
         // sync
         self.write(0x27000000);
@@ -180,6 +194,9 @@ impl<'a> RdpFontRendererContext<'a> {
         self.write(0x00000000);
     }
 
+    /// # Safety
+    /// Draws a tile directly to the rdp
+    #[allow(clippy::identity_op)]
     pub unsafe fn draw_tile(&mut self, xh: i32, yh: i32, w: i32, h: i32) {
         // set tile
         self.write(0x35100400); //  0<<2,0<<2, 0, 7<<2,7<<2, sl 0.0 tl 0.0, sh 7.0 th 7.0
@@ -196,6 +213,7 @@ impl<'a> RdpFontRendererContext<'a> {
         self.write(0x04000400); // scale factor 1:1
     }
 
+    /// # Safety
     /// aligsn write to size of 8
     pub unsafe fn align(&mut self) {
         while self.offset % 8 != 0 {

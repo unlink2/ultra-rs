@@ -9,6 +9,10 @@ pub static HEX_ROW2: [u8; 5] = [b'5', b'6', b'7', b'8', b'9'];
 pub static HEX_ROW3: [u8; 5] = [b'A', b'C', b'D', b'E', b'F'];
 pub static HEX: [&[u8]; 3] = [&HEX_ROW1, &HEX_ROW2, &HEX_ROW3];
 
+/**
+ * Represents a simple keyboard
+ * that can be rendered to any render context
+ */
 pub struct Keyboard<'a, T>
 where
     T: Copy + Clone,

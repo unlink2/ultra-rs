@@ -6,7 +6,9 @@
 #![feature(global_asm)]
 #![feature(naked_functions)]
 use core::panic::PanicInfo;
+
 /**
+ * # Safety
  * Barebones sample
  */
 #[no_mangle]
@@ -25,10 +27,9 @@ pub unsafe extern "C" fn _start() -> ! {
     );
 }
 
+/// # Safety
 #[no_mangle]
-pub unsafe extern "C" fn main() -> () {
-    return ();
-}
+pub unsafe extern "C" fn main() {}
 
 /// This function is called on panic.
 #[panic_handler]
