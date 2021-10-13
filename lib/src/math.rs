@@ -18,3 +18,17 @@ impl<T> Vector3<T> {
         return Self { x, y, z };
     }
 }
+
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct Point3<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+}
+
+impl<T> Point3<T> {
+    pub fn new(x: T, y: T, z: T) -> Self {
+        return Self { x, y, z };
+    }
+}
