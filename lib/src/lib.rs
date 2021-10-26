@@ -8,6 +8,7 @@ extern crate embedgdb;
 pub mod clone;
 pub mod color;
 pub mod font;
+pub mod frameadvance;
 pub mod input;
 pub mod interrupt;
 pub mod keyboard;

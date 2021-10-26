@@ -5,6 +5,7 @@ use super::font::*;
 use super::math::*;
 use super::monitor::Monitor;
 use super::render::{RenderContext, Widget};
+use crate::frameadvance::FrameAdvance;
 
 pub const MAX_ENTRIES: usize = 15;
 pub const MAX_TITLE_LEN: usize = 15;
@@ -19,6 +20,7 @@ where
 {
     Menu(Menu<T>),
     Monitor(Monitor<T>),
+    FrameAdvance(FrameAdvance<T>),
 }
 
 impl<T> Widget<T> for MenuFocus<T>
@@ -29,6 +31,7 @@ where
         match self {
             Self::Menu(m) => m.toggle(data),
             Self::Monitor(m) => m.toggle(data),
+            Self::FrameAdvance(m) => m.toggle(data),
         }
     }
 
@@ -36,6 +39,7 @@ where
         match self {
             Self::Menu(m) => m.active(),
             Self::Monitor(m) => m.active(),
+            Self::FrameAdvance(m) => m.active(),
         }
     }
 }
@@ -48,6 +52,7 @@ where
         match self {
             Self::Menu(m) => m.update(data),
             Self::Monitor(m) => m.update(data),
+            Self::FrameAdvance(m) => m.update(data),
         }
     }
 
@@ -55,6 +60,7 @@ where
         match self {
             Self::Menu(m) => m.draw(ctxt),
             Self::Monitor(m) => m.draw(ctxt),
+            Self::FrameAdvance(m) => m.draw(ctxt),
         }
     }
 }
