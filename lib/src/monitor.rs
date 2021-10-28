@@ -1,12 +1,11 @@
+use crate::keyboard::{self, Keyboard, HEX};
 use embedgdb::Stream;
 
-use crate::keyboard::{self, Keyboard, HEX};
-
 use super::color::Color;
-use super::embedgdb::{BufferedStream, Parser};
 use super::menu::*;
 use super::render::{Drawable, RenderContext, Widget};
 use core::ffi::c_void;
+use embedgdb::{BufferedStream, Parser};
 
 /**
  * This is a memory monitor

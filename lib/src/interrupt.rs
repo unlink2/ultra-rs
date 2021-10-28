@@ -1,5 +1,4 @@
 // $12 == $status
-
 pub type EnableIntFn = unsafe extern "C" fn(flags: usize) -> ();
 pub type DisableIntFn = unsafe extern "C" fn() -> usize;
 

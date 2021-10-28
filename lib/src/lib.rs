@@ -3,12 +3,13 @@
 #![feature(global_asm)]
 #![feature(naked_functions)]
 
-extern crate embedgdb;
+extern crate alloc;
 
 pub mod clone;
 pub mod color;
 pub mod font;
 pub mod frameadvance;
+pub mod init;
 pub mod input;
 pub mod interrupt;
 pub mod keyboard;
