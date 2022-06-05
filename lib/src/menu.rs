@@ -1,9 +1,9 @@
 use crate::color::Color;
+use crate::monitor::Monitor;
 use crate::render::Drawable;
 
 use super::font::*;
 use super::math::*;
-use super::monitor::Monitor;
 use super::render::{RenderContext, Widget};
 use crate::frameadvance::FrameAdvance;
 

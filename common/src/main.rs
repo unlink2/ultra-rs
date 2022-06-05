@@ -5,7 +5,8 @@
 #![feature(asm)]
 #![feature(global_asm)]
 #![feature(naked_functions)]
-use core::panic::PanicInfo;
+#![feature(asm_experimental_arch)]
+use core::{arch::asm, panic::PanicInfo};
 
 /**
  * # Safety

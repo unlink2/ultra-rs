@@ -1,6 +1,7 @@
 // Ed64 usb Code
 // This module mainly contains unsafe functions
 // to interface with the usb controller
+use core::arch::asm;
 use core::ffi::c_void;
 
 pub enum BiError {

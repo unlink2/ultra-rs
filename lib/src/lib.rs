@@ -1,9 +1,7 @@
 #![no_std]
-#![feature(asm)]
-#![feature(global_asm)]
 #![feature(naked_functions)]
-
-extern crate alloc;
+#![feature(asm_experimental_arch)]
+#![feature(asm_const)]
 
 pub mod clone;
 pub mod color;

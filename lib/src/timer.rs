@@ -3,7 +3,6 @@ use super::menu::*;
 use super::render::{to_decimal, Drawable, RenderContext, Widget};
 use core::ffi::c_void;
 use core::marker::PhantomData;
-use embedgdb::{BufferedStream, Parser};
 
 /**
  * A tmter that counts time based on framerate
